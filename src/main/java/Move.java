@@ -26,8 +26,16 @@ public class Move {
      * @param offsets Actions taken by the moving piece.
      */
     public Move(int start, List<Offset> offsets) {
+        if (start > 32 || start < 1) {
+            throw new IllegalArgumentException("start should be in the range 1-32 inclusive");
+        }
         this.start = start;
         this.offsets = new ArrayList<>(offsets);
+        for (int i = offsets.size()-1; i >= 0; i--) {
+            if (offsets.get(i) == null) {
+                offsets.remove(i);
+            }
+        }
     }
 
     /**
