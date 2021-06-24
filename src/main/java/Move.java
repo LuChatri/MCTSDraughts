@@ -31,9 +31,9 @@ public class Move {
         }
         this.start = start;
         this.offsets = new ArrayList<>(offsets);
-        for (int i = offsets.size()-1; i >= 0; i--) {
-            if (offsets.get(i) == null) {
-                offsets.remove(i);
+        for (int i = this.offsets.size()-1; i >= 0; i--) {
+            if (this.offsets.get(i) == null) {
+                this.offsets.remove(i);
             }
         }
     }
