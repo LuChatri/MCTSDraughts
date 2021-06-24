@@ -5,6 +5,10 @@ import java.util.List;
 /**
  * Represents a node in a multifurcating (non-binary) tree.
  *
+ * Many methods of this class return objects of type T. T is the
+ * concrete class; the node returns a reference to itself for
+ * convenient method chaining.
+ *
  * @param <T> The concrete class extending this class (e.g. MyCustomNode).
  * @param <D> Data type associated with the node (e.g. Integer, MyCustomNodeData).
  */
@@ -77,9 +81,9 @@ public abstract class Node<T extends Node<T, D>, D> {
         return getThis();
     }
 
-    public Node<T, D> addChild(@NotNull T child) {
+    public T addChild(@NotNull T child) {
         children.add(child);
-        return this;
+        return getThis();
     }
 
     public T addChildren(@NotNull List<T> children) {
