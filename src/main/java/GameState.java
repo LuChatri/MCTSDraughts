@@ -1,7 +1,4 @@
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * Represents a draughts position.
@@ -86,15 +83,7 @@ public class GameState {
         activePlayer = activePlayer.equals("W") ? "B" : "W";
     }
 
-    public List<Move> generateLegalMoves() {
-        return new ArrayList<>();
-    }
-
-    public Move generateRandomLegalMove() {
-        return new Move(1);
-    }
-
-    public void makeMove(Move move) {
+    public int makeMove(Move move) {
         // The Move class uses one-indexed squares. state is zero-indexed.
         // Hence, we subtract one.
         int location = move.getStart() - 1;
@@ -124,13 +113,15 @@ public class GameState {
         }
 
         // Occupy the ending square, promoting as needed.
-        if (location >= 28 && getActivePlayer().equals("B")) {
+        if (location >= 28 && moved == Piece.BLACK_MAN) {
             state.set(location, Piece.BLACK_KING);
-        } else if (location <= 3 && getActivePlayer().equals("W")) {
+        } else if (location <= 3 && moved == Piece.WHITE_MAN) {
             state.set(location, Piece.WHITE_KING);
         } else {
             state.set(location, moved);
         }
+        // Draughts squares are one-indexed and state squares are zero-indexed, so add one.
+        return location+1;
     }
 
     /**
@@ -182,35 +173,56 @@ public class GameState {
     }
 
     /**
-     * Finds the end square for a given move from a given square.
+     * Finds the end square for a given move type from a given square.
      *
-     * This method accounts for idiosyncrasies in square numbering.
+     * This method accounts for idiosyncrasies in square numbering. Illegal inputs
+     * (for example, those that would move a piece off the board) return -1.
      *
      * @param offset Type of move to make.
      * @param index Square to make move from, represented by an index into state.
      * @return End square after the move, represented by an index into state.
      */
     protected static int addOffsetToSquare(Offset offset, int index) {
-        // The (square/4)%2 == 0 business simply alternates between true
-        // and false for every row on the board.
+        int row = index/4;
+        int resultantSquare;
         switch (offset) {
             case MOVE_NORTHEAST:
-                return index - ((index/4)%2 == 0 ? 3 : 4);
+                resultantSquare = index - (row%2 == 0 ? 3 : 4);
+                break;
             case MOVE_NORTHWEST:
-                return index - ((index/4)%2 == 0 ? 4 : 5);
+                resultantSquare = index - (row%2 == 0 ? 4 : 5);
+                break;
             case MOVE_SOUTHEAST:
-                return index + ((index/4)%2 == 0 ? 5 : 4);
+                resultantSquare = index + (row%2 == 0 ? 5 : 4);
+                break;
             case MOVE_SOUTHWEST:
-                return index + ((index/4)%2 == 0 ? 4 : 3);
+                resultantSquare = index + (row%2 == 0 ? 4 : 3);
+                break;
             case JUMP_NORTHEAST:
-                return index-7;
+                resultantSquare = index-7;
+                break;
             case JUMP_NORTHWEST:
-                return index-9;
+                resultantSquare = index-9;
+                break;
             case JUMP_SOUTHEAST:
-                return index+9;
+                resultantSquare = index+9;
+                break;
             case JUMP_SOUTHWEST:
-                return index+7;
+                resultantSquare = index+7;
+                break;
+            default:
+                return -1;
         }
-        return -1;
+
+        if (resultantSquare < 0 || resultantSquare > 31) {
+            // Detect out-of-bounds rows.
+            return -1;
+        } else if (Math.abs(resultantSquare%4 - index%4) > 1) {
+            // Detect out-of-bounds columns by checking for wrapping
+            // across the board.
+            return -1;
+        } else {
+            return resultantSquare;
+        }
     }
 }
