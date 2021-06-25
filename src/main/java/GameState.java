@@ -66,7 +66,41 @@ public class GameState {
     }
 
     public void makeMove(Move move) {
+        int location = move.getStart() - 1;
+        Piece moved = state.get(location);
+        // Clear the starting square.
+        state.set(location, Piece.NONE);
+        // Clear any jumped pieces. For every jump, the square that gets
+        // jumped is one square away--the same distance as a normal,
+        // non-jumping move.
+        for (Offset o : move.getOffsets()) {
+            switch (o) {
+                case JUMP_NORTHEAST:
+                    state.set(addOffsetToSquare(Offset.MOVE_NORTHEAST, location), Piece.NONE);
+                    break;
+                case JUMP_NORTHWEST:
+                    state.set(addOffsetToSquare(Offset.MOVE_NORTHWEST, location), Piece.NONE);
+                    break;
+                case JUMP_SOUTHEAST:
+                    state.set(addOffsetToSquare(Offset.MOVE_SOUTHEAST, location), Piece.NONE);
+                    break;
+                case JUMP_SOUTHWEST:
+                    state.set(addOffsetToSquare(Offset.MOVE_SOUTHWEST, location), Piece.NONE);
+                    break;
+            }
 
+            // Sum of offsets + piece's initial location = piece's final location.
+            location = addOffsetToSquare(o, location);
+        }
+
+        // Occupy the ending square. Promote if necessary.
+        if (location >= 28 && getActivePlayer().equals("B")) {
+            state.set(location, Piece.BLACK_KING);
+        } else if (location <= 3 && getActivePlayer().equals("W")) {
+            state.set(location, Piece.WHITE_KING);
+        } else {
+            state.set(location, moved);
+        }
     }
 
     @Override
@@ -105,5 +139,27 @@ public class GameState {
         if (o == null || getClass() != o.getClass()) return false;
         GameState gameState = (GameState) o;
         return Objects.equals(state, gameState.state) && Objects.equals(activePlayer, gameState.activePlayer);
+    }
+
+    protected static int addOffsetToSquare(Offset offset, int square) {
+        switch (offset) {
+            case MOVE_NORTHEAST:
+                return square - ((square/4)%2 == 0 ? 3 : 4);
+            case MOVE_NORTHWEST:
+                return square - ((square/4)%2 == 0 ? 4 : 5);
+            case MOVE_SOUTHEAST:
+                return square + ((square/4)%2 == 0 ? 5 : 4);
+            case MOVE_SOUTHWEST:
+                return square + ((square/4)%2 == 0 ? 4 : 3);
+            case JUMP_NORTHEAST:
+                return square-7;
+            case JUMP_NORTHWEST:
+                return square-9;
+            case JUMP_SOUTHEAST:
+                return square+9;
+            case JUMP_SOUTHWEST:
+                return square+7;
+        }
+        return -1;
     }
 }
