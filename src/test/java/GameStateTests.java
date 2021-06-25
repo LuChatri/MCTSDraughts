@@ -8,7 +8,7 @@ import java.util.*;
 public class GameStateTests {
 
     @ParameterizedTest
-    @ValueSource(strings= {
+    @ValueSource(strings={
             "B:WK10,K15,18,24,27,28:B12,16,20,K22,K25,K29",
             "B:W18,19,21,23,24,26,29,30,31,32:B1,2,3,4,6,7,9,10,11,12",
             "W:W5,6,7,11,18,19,27:B2,3,4,9,10,17,20,25,26,28",

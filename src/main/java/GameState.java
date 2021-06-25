@@ -3,20 +3,42 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Represents a draughts position.
+ */
 public class GameState {
 
-    private List<Piece> state;
+    private final List<Piece> state;
     private String activePlayer;
 
+    /**
+     * Constructs a GameState representing draughts' starting position.
+     */
     public GameState() {
         this("B:W21,22,23,24,25,26,27,28,29,30,31,32:B1,2,3,4,5,6,7,8,9,10,11,12");
     }
 
+    /**
+     * Copies a GameState.
+     * @param gameState GameState to copy.
+     */
     public GameState(GameState gameState) {
         this.state = gameState.state;
         this.activePlayer = gameState.activePlayer;
     }
 
+    /**
+     * Constructs a GameState from a string in Forsyth-Edwards Notation for draughts.
+     *
+     * For more on the structure of a draughts FEN,
+     * {@see https://en.wikipedia.org/wiki/Portable_Draughts_Notation#Tag_Pairs}.
+     * FENs accepted by this constructor cannot have trailing periods.
+     *
+     * This constructor will not always error out on invalid FENs.
+     *
+     * @throws IllegalArgumentException FEN is invalid.
+     * @param FEN Forsyth-Edwards Notation representation of a draughts position.
+     */
     public GameState(String FEN) {
         state = new ArrayList<>(Collections.nCopies(32, Piece.NONE));
 
@@ -49,10 +71,17 @@ public class GameState {
         }
     }
 
+    /**
+     * Gets the player who is moving on this turn.
+     * @return "W" or "B" for white and black, respectively.
+     */
     public String getActivePlayer() {
         return activePlayer;
     }
 
+    /**
+     * Toggles the player who is moving on this turn between white and black.
+     */
     public void swapActivePlayer() {
         activePlayer = activePlayer.equals("W") ? "B" : "W";
     }
@@ -66,13 +95,15 @@ public class GameState {
     }
 
     public void makeMove(Move move) {
+        // The Move class uses one-indexed squares. state is zero-indexed.
+        // Hence, we subtract one.
         int location = move.getStart() - 1;
         Piece moved = state.get(location);
-        // Clear the starting square.
-        state.set(location, Piece.NONE);
-        // Clear any jumped pieces. For every jump, the square that gets
-        // jumped is one square away--the same distance as a normal,
-        // non-jumping move.
+        state.set(location, Piece.NONE);    // Clear the starting square.
+
+        // Clear any jumped pieces. Our strategy: for every jump the moved
+        // piece makes, imagine it made a normal move in the same direction
+        // instead and clear the square it would land on.
         for (Offset o : move.getOffsets()) {
             switch (o) {
                 case JUMP_NORTHEAST:
@@ -88,12 +119,11 @@ public class GameState {
                     state.set(addOffsetToSquare(Offset.MOVE_SOUTHWEST, location), Piece.NONE);
                     break;
             }
-
-            // Sum of offsets + piece's initial location = piece's final location.
+            // Location after this move/jump.
             location = addOffsetToSquare(o, location);
         }
 
-        // Occupy the ending square. Promote if necessary.
+        // Occupy the ending square, promoting as needed.
         if (location >= 28 && getActivePlayer().equals("B")) {
             state.set(location, Piece.BLACK_KING);
         } else if (location <= 3 && getActivePlayer().equals("W")) {
@@ -103,6 +133,16 @@ public class GameState {
         }
     }
 
+    /**
+     * Converts a GameState to a string in Forsyth-Edwards Notation.
+     *
+     * For more on FENs for draughts,
+     * {@see https://en.wikipedia.org/wiki/Portable_Draughts_Notation#Tag_Pairs}.
+     * This method orders pieces by square from lowest to highest, so expect
+     * "W:WK1,5,7:B18,22" and not "W:W5,7,K1:B22,18".
+     *
+     * @return Forsyth-Edwards Notation representation of this position.
+     */
     @Override
     public String toString() {
         StringBuilder whitePieces = new StringBuilder(":W");
@@ -141,24 +181,35 @@ public class GameState {
         return Objects.equals(state, gameState.state) && Objects.equals(activePlayer, gameState.activePlayer);
     }
 
-    protected static int addOffsetToSquare(Offset offset, int square) {
+    /**
+     * Finds the end square for a given move from a given square.
+     *
+     * This method accounts for idiosyncrasies in square numbering.
+     *
+     * @param offset Type of move to make.
+     * @param index Square to make move from, represented by an index into state.
+     * @return End square after the move, represented by an index into state.
+     */
+    protected static int addOffsetToSquare(Offset offset, int index) {
+        // The (square/4)%2 == 0 business simply alternates between true
+        // and false for every row on the board.
         switch (offset) {
             case MOVE_NORTHEAST:
-                return square - ((square/4)%2 == 0 ? 3 : 4);
+                return index - ((index/4)%2 == 0 ? 3 : 4);
             case MOVE_NORTHWEST:
-                return square - ((square/4)%2 == 0 ? 4 : 5);
+                return index - ((index/4)%2 == 0 ? 4 : 5);
             case MOVE_SOUTHEAST:
-                return square + ((square/4)%2 == 0 ? 5 : 4);
+                return index + ((index/4)%2 == 0 ? 5 : 4);
             case MOVE_SOUTHWEST:
-                return square + ((square/4)%2 == 0 ? 4 : 3);
+                return index + ((index/4)%2 == 0 ? 4 : 3);
             case JUMP_NORTHEAST:
-                return square-7;
+                return index-7;
             case JUMP_NORTHWEST:
-                return square-9;
+                return index-9;
             case JUMP_SOUTHEAST:
-                return square+9;
+                return index+9;
             case JUMP_SOUTHWEST:
-                return square+7;
+                return index+7;
         }
         return -1;
     }
