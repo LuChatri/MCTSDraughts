@@ -21,7 +21,7 @@ public class GameState {
      */
     public GameState(GameState gameState) {
         this.state = new ArrayList<>(gameState.state);
-        this.activePlayer = new String(gameState.activePlayer);
+        this.activePlayer = gameState.activePlayer;
     }
 
     /**
@@ -238,10 +238,15 @@ public class GameState {
         return  moves;
     }
 
-    public int countPieces() {
-        return state.size() - Collections.frequency(state, Piece.NONE);
-    }
-
+    /**
+     * Apply a legal move to this GameState.
+     *
+     * This method doesn't change the active player. Behavior for illegal moves
+     * is undefined.
+     *
+     * @param move A legal move for this GameState.
+     * @return The end square of the piece that was moved.
+     */
     public int makeMove(Move move) {
         // The Move class uses one-indexed squares. state is zero-indexed.
         // Hence, we subtract one.
