@@ -20,8 +20,8 @@ public class GameState {
      * @param gameState GameState to copy.
      */
     public GameState(GameState gameState) {
-        this.state = gameState.state;
-        this.activePlayer = gameState.activePlayer;
+        this.state = new ArrayList<>(gameState.state);
+        this.activePlayer = new String(gameState.activePlayer);
     }
 
     /**
@@ -81,6 +81,141 @@ public class GameState {
      */
     public void swapActivePlayer() {
         activePlayer = activePlayer.equals("W") ? "B" : "W";
+    }
+
+    public List<Move> generateLegalMoves() {
+        List<Move> moves = new ArrayList<>();
+        // Generate legal jumps first.
+        for (int square = 0; square < state.size(); square++) {
+            moves.addAll(generateJumpsFromSquare(square));
+        }
+        // Jumps are mandatory, so only generate normal moves if
+        // there are no jumps.
+        if (moves.size() == 0) {
+            for (int square = 0; square < state.size(); square++) {
+                moves.addAll(generateNormalMovesFromSquare(square));
+            }
+        }
+        return moves;
+    }
+
+    protected List<Move> generateJumpsFromSquare(int index) {
+        final Map<Piece, Offset[]> pieceToJumpDirections = Map.of(
+                Piece.WHITE_MAN, new Offset[]{Offset.JUMP_NORTHEAST, Offset.JUMP_NORTHWEST},
+                Piece.BLACK_MAN, new Offset[]{Offset.JUMP_SOUTHEAST, Offset.JUMP_SOUTHWEST},
+                Piece.WHITE_KING, new Offset[]{Offset.JUMP_NORTHEAST, Offset.JUMP_NORTHWEST,
+                        Offset.JUMP_SOUTHEAST, Offset.JUMP_SOUTHWEST},
+                Piece.BLACK_KING, new Offset[]{Offset.JUMP_NORTHEAST, Offset.JUMP_NORTHWEST,
+                        Offset.JUMP_SOUTHEAST, Offset.JUMP_SOUTHWEST},
+                Piece.NONE, new Offset[]{}
+        );
+        final Map<Offset, Offset> jumpToMove = Map.of(
+                Offset.JUMP_NORTHEAST, Offset.MOVE_NORTHEAST,
+                Offset.JUMP_NORTHWEST, Offset.MOVE_NORTHWEST,
+                Offset.JUMP_SOUTHEAST, Offset.MOVE_SOUTHEAST,
+                Offset.JUMP_SOUTHWEST, Offset.MOVE_SOUTHWEST
+        );
+
+        List<Move> moves = new ArrayList<>();
+        Piece pieceOnSquare = state.get(index);
+
+        // If the piece is None or if it doesn't belong to the active player,
+        // it cannot move. Return the empty move list.
+        if (pieceOnSquare == Piece.NONE ||
+                (getActivePlayer().equals("W")
+                        && (pieceOnSquare == Piece.BLACK_KING || pieceOnSquare == Piece.BLACK_MAN)) ||
+                (getActivePlayer().equals("B")
+                        && (pieceOnSquare == Piece.WHITE_KING || pieceOnSquare == Piece.WHITE_MAN))) {
+            return moves;
+        }
+
+        List<Piece> canCapture = new ArrayList<>();
+        if (getActivePlayer().equals("W")) {
+            canCapture.add(Piece.BLACK_KING);
+            canCapture.add(Piece.BLACK_MAN);
+        } else {
+            canCapture.add(Piece.WHITE_KING);
+            canCapture.add(Piece.WHITE_MAN);
+        }
+
+        // For every direction this piece could theoretically jump
+        for (Offset jumpDirection : pieceToJumpDirections.get(pieceOnSquare)) {
+            // Check that jumping would not place the piece out of bounds or on another piece
+            int endSquare = addOffsetToSquare(jumpDirection, index);
+            if (endSquare == -1 || state.get(endSquare) != Piece.NONE) {
+                continue;
+            }
+            // Check that there is a piece to capture while jumping.
+            int jumpedIndex = addOffsetToSquare(jumpToMove.get(jumpDirection), index);
+            if (!(canCapture.contains(state.get(jumpedIndex)))) {
+                continue;
+            }
+
+            // Recursively generate moves for possible continuations after this jump.
+            // That is, generate multi-capture, multi-jump moves, provided no
+            // promotion occurs on this jump.
+            GameState gameStateCopy = new GameState(this);
+            // Add one to index since Move uses one-indexed squares.
+            Move toMake = new Move(index+1, jumpDirection);
+            gameStateCopy.makeMove(toMake);
+            boolean multiJumpExists = false;
+
+            if (!((pieceOnSquare == Piece.BLACK_MAN && endSquare >= 28)
+                    || (pieceOnSquare == Piece.WHITE_MAN && endSquare <= 3))) {
+                for (Move nextJump : gameStateCopy.generateJumpsFromSquare(endSquare)) {
+                    // Prepend the current jump to its continuations to create our final move.
+                    List<Offset> nextJumpOffsets = nextJump.getOffsets();
+                    nextJumpOffsets.add(0, jumpDirection);
+                    moves.add(new Move(index + 1, nextJumpOffsets));
+                    multiJumpExists = true;
+                }
+            }
+
+            if (!(multiJumpExists)) {
+                moves.add(toMake);
+            }
+        }
+        return moves;
+    }
+
+    protected List<Move> generateNormalMovesFromSquare(int index) {
+        final Map<Piece, Offset[]> pieceToMoveDirections = Map.of(
+                Piece.WHITE_MAN, new Offset[]{Offset.MOVE_NORTHEAST, Offset.MOVE_NORTHWEST},
+                Piece.BLACK_MAN, new Offset[]{Offset.MOVE_SOUTHEAST, Offset.MOVE_SOUTHWEST},
+                Piece.WHITE_KING, new Offset[]{Offset.MOVE_NORTHEAST, Offset.MOVE_NORTHWEST,
+                        Offset.MOVE_SOUTHEAST, Offset.MOVE_SOUTHWEST},
+                Piece.BLACK_KING, new Offset[]{Offset.MOVE_NORTHEAST, Offset.MOVE_NORTHWEST,
+                        Offset.MOVE_SOUTHEAST, Offset.MOVE_SOUTHWEST},
+                Piece.NONE, new Offset[]{}
+        );
+
+        List<Move> moves = new ArrayList<>();
+        Piece pieceOnSquare = state.get(index);
+
+        // If the piece is None or if it doesn't belong to the active player,
+        // it cannot move. Return the empty move list.
+        if (pieceOnSquare == Piece.NONE ||
+                (getActivePlayer().equals("W")
+                        && (pieceOnSquare == Piece.BLACK_KING || pieceOnSquare == Piece.BLACK_MAN)) ||
+                (getActivePlayer().equals("B")
+                        && (pieceOnSquare == Piece.WHITE_KING || pieceOnSquare == Piece.WHITE_MAN))) {
+            return moves;
+        }
+
+        for (Offset moveDirection : pieceToMoveDirections.get(pieceOnSquare)) {
+            // Check that the destination square isn't occupied or out of bounds.
+            int endSquare = addOffsetToSquare(moveDirection, index);
+            if (endSquare != -1 && state.get(endSquare) == Piece.NONE) {
+                // Add one because Move is one-indexed and this method is zero-indexed.
+                moves.add(new Move(index+1, moveDirection));
+            }
+        }
+
+        return  moves;
+    }
+
+    public int countPieces() {
+        return state.size() - Collections.frequency(state, Piece.NONE);
     }
 
     public int makeMove(Move move) {
