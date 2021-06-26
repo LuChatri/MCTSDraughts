@@ -44,6 +44,24 @@ public class MCTSNode extends Node<MCTSNode, Move> {
         this(0, 0, null, new ArrayList<>(), null);
     }
 
+    /**
+     * Gets the value of this node per Upper Confidence Bound Applied to Trees.
+     *
+     * If the node is unvisited or the root node, its UCT value is
+     * {@link Double#POSITIVE_INFINITY}.
+     *
+     * @param explorationParameter UCT value used to balance exploration and exploitation.
+     * @return UCT value of this node.
+     */
+    public Double getUCTValue(Double explorationParameter) {
+        if (isRoot() || getVisits() == 0) {
+            return Double.POSITIVE_INFINITY;
+        }
+        Double exploitation = getValue() / getVisits();
+        Double exploration = explorationParameter * Math.sqrt(Math.log(getParent().getVisits()) / getVisits());
+        return exploitation + exploration;
+    }
+
     public double getValue() {
         return value;
     }
