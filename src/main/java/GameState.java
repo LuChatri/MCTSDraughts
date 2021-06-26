@@ -83,14 +83,21 @@ public class GameState {
         activePlayer = activePlayer.equals("W") ? "B" : "W";
     }
 
+    /**
+     * Finds all valid moves in the current position.
+     *
+     * Different sequences of jumps with the same effect are considered
+     * distinct moves.
+     *
+     * @return All valid moves.
+     */
     public List<Move> generateLegalMoves() {
         List<Move> moves = new ArrayList<>();
-        // Generate legal jumps first.
         for (int square = 0; square < state.size(); square++) {
             moves.addAll(generateJumpsFromSquare(square));
         }
-        // Jumps are mandatory, so only generate normal moves if
-        // there are no jumps.
+        // Since jumps are mandatory, normal move generation is
+        // unnecessary if any legal jumps were found.
         if (moves.size() == 0) {
             for (int square = 0; square < state.size(); square++) {
                 moves.addAll(generateNormalMovesFromSquare(square));
@@ -99,6 +106,12 @@ public class GameState {
         return moves;
     }
 
+    /**
+     * Finds all valid captures for the piece at a given square.
+     *
+     * @param index Square to generate captures from as an index into state.
+     * @return Valid captures for this piece.
+     */
     protected List<Move> generateJumpsFromSquare(int index) {
         final Map<Piece, Offset[]> pieceToJumpDirections = Map.of(
                 Piece.WHITE_MAN, new Offset[]{Offset.JUMP_NORTHEAST, Offset.JUMP_NORTHWEST},
@@ -119,8 +132,8 @@ public class GameState {
         List<Move> moves = new ArrayList<>();
         Piece pieceOnSquare = state.get(index);
 
-        // If the piece is None or if it doesn't belong to the active player,
-        // it cannot move. Return the empty move list.
+        // If the square contains no piece or one of the inactive player's pieces,
+        // no moves are possible from this square.
         if (pieceOnSquare == Piece.NONE ||
                 (getActivePlayer().equals("W")
                         && (pieceOnSquare == Piece.BLACK_KING || pieceOnSquare == Piece.BLACK_MAN)) ||
@@ -129,6 +142,7 @@ public class GameState {
             return moves;
         }
 
+        // Ensure we only jump pieces of the opposite color.
         List<Piece> canCapture = new ArrayList<>();
         if (getActivePlayer().equals("W")) {
             canCapture.add(Piece.BLACK_KING);
@@ -138,32 +152,32 @@ public class GameState {
             canCapture.add(Piece.WHITE_MAN);
         }
 
-        // For every direction this piece could theoretically jump
+        // Consider every direction this piece could theoretically jump.
         for (Offset jumpDirection : pieceToJumpDirections.get(pieceOnSquare)) {
-            // Check that jumping would not place the piece out of bounds or on another piece
+            // Ensure that the destination square is not occupied or out of bounds.
             int endSquare = addOffsetToSquare(jumpDirection, index);
             if (endSquare == -1 || state.get(endSquare) != Piece.NONE) {
                 continue;
             }
-            // Check that there is a piece to capture while jumping.
+            // Ensure that there is a piece to capture in this jump.
             int jumpedIndex = addOffsetToSquare(jumpToMove.get(jumpDirection), index);
             if (!(canCapture.contains(state.get(jumpedIndex)))) {
                 continue;
             }
 
-            // Recursively generate moves for possible continuations after this jump.
-            // That is, generate multi-capture, multi-jump moves, provided no
-            // promotion occurs on this jump.
+            // Recursively generate moves for possible multi-capture, multi-jump
+            // continuations of this jump, provided the moving piece doesn't
+            // promote (promoting ends one's turn).
             GameState gameStateCopy = new GameState(this);
-            // Add one to index since Move uses one-indexed squares.
+            // Move uses one-indexed squares, so add one.
             Move toMake = new Move(index+1, jumpDirection);
             gameStateCopy.makeMove(toMake);
             boolean multiJumpExists = false;
-
+            // This if statement handles promotions.
             if (!((pieceOnSquare == Piece.BLACK_MAN && endSquare >= 28)
                     || (pieceOnSquare == Piece.WHITE_MAN && endSquare <= 3))) {
                 for (Move nextJump : gameStateCopy.generateJumpsFromSquare(endSquare)) {
-                    // Prepend the current jump to its continuations to create our final move.
+                    // Prepend the current jump to its continuations to create our final legal move.
                     List<Offset> nextJumpOffsets = nextJump.getOffsets();
                     nextJumpOffsets.add(0, jumpDirection);
                     moves.add(new Move(index + 1, nextJumpOffsets));
@@ -178,6 +192,14 @@ public class GameState {
         return moves;
     }
 
+    /**
+     * Finds all non-jump moves for the piece at a given square.
+     *
+     * This method does not account for mandatory jumps.
+     *
+     * @param index Square to generate moves from as an index into state.
+     * @return Valid non-jump moves for this piece.
+     */
     protected List<Move> generateNormalMovesFromSquare(int index) {
         final Map<Piece, Offset[]> pieceToMoveDirections = Map.of(
                 Piece.WHITE_MAN, new Offset[]{Offset.MOVE_NORTHEAST, Offset.MOVE_NORTHWEST},
@@ -192,8 +214,8 @@ public class GameState {
         List<Move> moves = new ArrayList<>();
         Piece pieceOnSquare = state.get(index);
 
-        // If the piece is None or if it doesn't belong to the active player,
-        // it cannot move. Return the empty move list.
+        // If the square contains no piece or one of the inactive player's pieces,
+        // no moves are possible from this square.
         if (pieceOnSquare == Piece.NONE ||
                 (getActivePlayer().equals("W")
                         && (pieceOnSquare == Piece.BLACK_KING || pieceOnSquare == Piece.BLACK_MAN)) ||
@@ -202,11 +224,13 @@ public class GameState {
             return moves;
         }
 
+        // For each direction this piece could theoretically moves
         for (Offset moveDirection : pieceToMoveDirections.get(pieceOnSquare)) {
-            // Check that the destination square isn't occupied or out of bounds.
+            // Ensure that the destination square isn't occupied or out of bounds.
             int endSquare = addOffsetToSquare(moveDirection, index);
             if (endSquare != -1 && state.get(endSquare) == Piece.NONE) {
-                // Add one because Move is one-indexed and this method is zero-indexed.
+                // This is a legal move! Add it to the list.
+                // Move is one-indexed, so add one to index.
                 moves.add(new Move(index+1, moveDirection));
             }
         }
