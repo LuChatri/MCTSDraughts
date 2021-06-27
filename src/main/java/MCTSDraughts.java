@@ -31,7 +31,7 @@ public class MCTSDraughts {
 
             System.out.println("Best Moves: " + searcher.getBestMoves());
         } catch (Exception e) {
-            System.out.println("An unexpected error occurred. Time ot open an issue on Github.");
+            System.out.println("An unexpected error occurred. Time to open an issue on Github.");
             e.printStackTrace();
         }
     }

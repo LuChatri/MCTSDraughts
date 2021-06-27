@@ -7,14 +7,14 @@ import java.util.Random;
  */
 public class MCTSDraughtsSearcher {
 
-    public MCTSNode root;
+    private final MCTSNode root;
     private double explorationParameter;
 
     /**
      * Constructs a new MCTSDraughtsSearcher.
      *
      * @param gameState Game state to search from.
-     * @param explorationParameter Constant parameter used in MCTS to balance exploration and explitation.
+     * @param explorationParameter Constant parameter used in MCTS to balance exploration and exploitation.
      */
     public MCTSDraughtsSearcher(GameState gameState, double explorationParameter) {
         root = new MCTSNode(0, 0, null, new ArrayList<>(), gameState);
