@@ -17,7 +17,7 @@ public class MCTSDraughts {
         try {
             duration = Integer.parseInt(args[1]);
         } catch (NumberFormatException e) {
-            System.out.println("Please input a valid draughts FEN in argument 1");
+            System.out.println("Please input a valid duration in argument 1");
             System.exit(1);
         }
 
