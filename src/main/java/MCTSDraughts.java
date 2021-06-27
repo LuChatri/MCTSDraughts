@@ -1,6 +1,10 @@
 public class MCTSDraughts {
 
     public static void main(String[] args) {
+        if (args.length < 2) {
+            System.out.println("Usage: java -jar MCTSDraughts.jar [FEN] [Search Time (ms)]");
+        }
+
         GameState gs = null;
         try {
             gs = new GameState(args[0]);
