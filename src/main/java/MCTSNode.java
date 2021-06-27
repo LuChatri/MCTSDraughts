@@ -4,7 +4,7 @@ import java.util.List;
 /**
  * Represents a tree node containing information for Monte Carlo Tree Search.
  */
-public class MCTSNode extends Node<MCTSNode, Move> {
+public class MCTSNode extends Node<MCTSNode, GameState> {
 
     private double value;
     private int visits;
@@ -22,9 +22,9 @@ public class MCTSNode extends Node<MCTSNode, Move> {
      * @param visits Number of playouts from this node.
      * @param parent Node one step higher in the tree.
      * @param children Node one step lower in the tree.
-     * @param data The move associated with this node.
+     * @param data The game state associated with this node.
      */
-    public MCTSNode(double value, int visits, MCTSNode parent, List<MCTSNode> children, Move data) {
+    public MCTSNode(double value, int visits, MCTSNode parent, List<MCTSNode> children, GameState data) {
         super(parent, children, data);
         setValue(value);
         setVisits(visits);
