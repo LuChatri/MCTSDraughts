@@ -1,3 +1,6 @@
+# Packaging information
+*META-INF*
+
 # From https://github.com/github/gitignore/blob/master/Gradle.gitignore
 .gradle
 /build/
@@ -36,6 +39,7 @@ hs_err_pid*
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
 
 # User-specific stuff:
+.idea/artifacts/
 .idea/workspace.xml
 .idea/tasks.xml
 .idea/dictionaries
