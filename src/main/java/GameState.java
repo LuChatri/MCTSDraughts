@@ -8,6 +8,33 @@ public class GameState {
     private final List<Piece> state;
     private String activePlayer;
 
+    private static final Map<Piece, Offset[]> pieceToJumpDirections = Map.of(
+            Piece.WHITE_MAN, new Offset[]{Offset.JUMP_NORTHEAST, Offset.JUMP_NORTHWEST},
+            Piece.BLACK_MAN, new Offset[]{Offset.JUMP_SOUTHEAST, Offset.JUMP_SOUTHWEST},
+            Piece.WHITE_KING, new Offset[]{Offset.JUMP_NORTHEAST, Offset.JUMP_NORTHWEST,
+                    Offset.JUMP_SOUTHEAST, Offset.JUMP_SOUTHWEST},
+            Piece.BLACK_KING, new Offset[]{Offset.JUMP_NORTHEAST, Offset.JUMP_NORTHWEST,
+                    Offset.JUMP_SOUTHEAST, Offset.JUMP_SOUTHWEST},
+            Piece.NONE, new Offset[]{}
+    );
+
+    private static final Map<Offset, Offset> jumpToMove = Map.of(
+            Offset.JUMP_NORTHEAST, Offset.MOVE_NORTHEAST,
+            Offset.JUMP_NORTHWEST, Offset.MOVE_NORTHWEST,
+            Offset.JUMP_SOUTHEAST, Offset.MOVE_SOUTHEAST,
+            Offset.JUMP_SOUTHWEST, Offset.MOVE_SOUTHWEST
+    );
+
+    private static final Map<Piece, Offset[]> pieceToMoveDirections = Map.of(
+            Piece.WHITE_MAN, new Offset[]{Offset.MOVE_NORTHEAST, Offset.MOVE_NORTHWEST},
+            Piece.BLACK_MAN, new Offset[]{Offset.MOVE_SOUTHEAST, Offset.MOVE_SOUTHWEST},
+            Piece.WHITE_KING, new Offset[]{Offset.MOVE_NORTHEAST, Offset.MOVE_NORTHWEST,
+                    Offset.MOVE_SOUTHEAST, Offset.MOVE_SOUTHWEST},
+            Piece.BLACK_KING, new Offset[]{Offset.MOVE_NORTHEAST, Offset.MOVE_NORTHWEST,
+                    Offset.MOVE_SOUTHEAST, Offset.MOVE_SOUTHWEST},
+            Piece.NONE, new Offset[]{}
+    );
+
     /**
      * Constructs a GameState representing draughts' starting position.
      */
@@ -113,22 +140,6 @@ public class GameState {
      * @return Valid captures for this piece.
      */
     protected List<Move> generateJumpsFromSquare(int index) {
-        final Map<Piece, Offset[]> pieceToJumpDirections = Map.of(
-                Piece.WHITE_MAN, new Offset[]{Offset.JUMP_NORTHEAST, Offset.JUMP_NORTHWEST},
-                Piece.BLACK_MAN, new Offset[]{Offset.JUMP_SOUTHEAST, Offset.JUMP_SOUTHWEST},
-                Piece.WHITE_KING, new Offset[]{Offset.JUMP_NORTHEAST, Offset.JUMP_NORTHWEST,
-                        Offset.JUMP_SOUTHEAST, Offset.JUMP_SOUTHWEST},
-                Piece.BLACK_KING, new Offset[]{Offset.JUMP_NORTHEAST, Offset.JUMP_NORTHWEST,
-                        Offset.JUMP_SOUTHEAST, Offset.JUMP_SOUTHWEST},
-                Piece.NONE, new Offset[]{}
-        );
-        final Map<Offset, Offset> jumpToMove = Map.of(
-                Offset.JUMP_NORTHEAST, Offset.MOVE_NORTHEAST,
-                Offset.JUMP_NORTHWEST, Offset.MOVE_NORTHWEST,
-                Offset.JUMP_SOUTHEAST, Offset.MOVE_SOUTHEAST,
-                Offset.JUMP_SOUTHWEST, Offset.MOVE_SOUTHWEST
-        );
-
         List<Move> moves = new ArrayList<>();
         Piece pieceOnSquare = state.get(index);
 
@@ -201,16 +212,6 @@ public class GameState {
      * @return Valid non-jump moves for this piece.
      */
     protected List<Move> generateNormalMovesFromSquare(int index) {
-        final Map<Piece, Offset[]> pieceToMoveDirections = Map.of(
-                Piece.WHITE_MAN, new Offset[]{Offset.MOVE_NORTHEAST, Offset.MOVE_NORTHWEST},
-                Piece.BLACK_MAN, new Offset[]{Offset.MOVE_SOUTHEAST, Offset.MOVE_SOUTHWEST},
-                Piece.WHITE_KING, new Offset[]{Offset.MOVE_NORTHEAST, Offset.MOVE_NORTHWEST,
-                        Offset.MOVE_SOUTHEAST, Offset.MOVE_SOUTHWEST},
-                Piece.BLACK_KING, new Offset[]{Offset.MOVE_NORTHEAST, Offset.MOVE_NORTHWEST,
-                        Offset.MOVE_SOUTHEAST, Offset.MOVE_SOUTHWEST},
-                Piece.NONE, new Offset[]{}
-        );
-
         List<Move> moves = new ArrayList<>();
         Piece pieceOnSquare = state.get(index);
 
