@@ -53,12 +53,12 @@ public class MCTSNode extends Node<MCTSNode, Move> {
      * @param explorationParameter UCT value used to balance exploration and exploitation.
      * @return UCT value of this node.
      */
-    public Double getUCTValue(Double explorationParameter) {
+    public double getUCTValue(double explorationParameter) {
         if (isRoot() || getVisits() == 0) {
             return Double.POSITIVE_INFINITY;
         }
-        Double exploitation = getValue() / getVisits();
-        Double exploration = explorationParameter * Math.sqrt(Math.log(getParent().getVisits()) / getVisits());
+        double exploitation = getValue() / getVisits();
+        double exploration = explorationParameter * Math.sqrt(Math.log(getParent().getVisits()) / getVisits());
         return exploitation + exploration;
     }
 
